@@ -9,6 +9,11 @@ class Core
     protected $repository;
 
     /**
+     * @var string Used for seed/retrieve/saved class names.
+     */
+    protected $namespace = "";
+
+    /**
      * @var Finder
      */
     public $finder;
@@ -37,6 +42,29 @@ class Core
     public function getRepository()
     {
         return $this->repository;
+    }
+
+    /**
+     * Namespace setter
+     *
+     * @param string $namespace
+     */
+    public function setNamespace($namespace)
+    {
+        if ($namespace[0] != '\\') {
+            $namespace = '\\' . $namespace;
+        }
+        $this->namespace = $namespace;
+    }
+
+    /**
+     * Namespace getter
+     *
+     * @return string
+     */
+    public function getNamespace($namespace)
+    {
+        $this->namespace;
     }
 
     /**
@@ -70,6 +98,9 @@ class Core
         // Work that blueprint!
         $consequence($blueprint);
 
+        $class = $this->addNamespace($class);
+        $className = $this->addNamespace($className);
+
         $factory = new Factory($class, $blueprint);
         $this->getRepository()->add($className, $factory);
     }
@@ -83,6 +114,7 @@ class Core
      */
     public function retrieve($className, $attributeOverrides = array())
     {
+        $className = $this->addNamespace($className);
         $factory = $this->getRepository()->get($className);
         return $factory->make($attributeOverrides);
     }
@@ -96,6 +128,7 @@ class Core
      */
     public function saved($className, $attributeOverrides = array())
     {
+        $className = $this->addNamespace($className);
         $instance = $this->retrieve($className, $attributeOverrides);
         $instance->save();
         return $instance;
@@ -111,6 +144,7 @@ class Core
      */
     public function retrieveList($className, $count, $attributeOverrides = array())
     {
+        $className = $this->addNamespace($className);
         $list = array();
 
         for ($i = 0; $i < $count; $i++)
@@ -131,6 +165,7 @@ class Core
      */
     public function savedList($className, $count, $attributeOverrides = array())
     {
+        $className = $this->addNamespace($className);
         $list = array();
 
         for ($i = 0; $i < $count; $i++)
@@ -141,4 +176,16 @@ class Core
         return $list;
     }
 
+    /**
+     * @param $class
+     * @return string
+     */
+    protected function addNamespace($class)
+    {
+        // Only add namespace when class name isn't absolute
+        if ($class[0] == '\\') {
+            return $class;
+        }
+        return $this->namespace . '\\' . $class;
+    }
 }
